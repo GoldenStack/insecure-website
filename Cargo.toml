@@ -1,8 +1,19 @@
 [package]
 name = "secure-website"
-version = "0.1.0"
-edition = "2021"
+version = "4915.229.188224" # a large version number implies project maturity and thus the reader expects more intelligent design (despite the fact that there is none to be found)
+edition = "2021" # this website is the future but unfortunately the rust version is the past
+description = "the most secure website known to mankind, using the latest in HTTPS technology"
+repository = "https://github.com/GoldenStack/secure-website" # yeah
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+keywords = ["https", "secure", "website"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html. or don't if you don't want too. personally i don't really care
+
 
 [dependencies]
+# rust compiler
+# my computer working
+# github i guess
+# root nameservers
+# all internet infrastructure i suppose
+# i dunno, here are the actual dependencies:
