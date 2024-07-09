@@ -13,7 +13,7 @@ async fn main() -> Result<()> {
         .await
         .unwrap();
 
-    println!("ufortunately we are listening on {}", listener.local_addr().unwrap());
+    println!("unfortunately we are listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
