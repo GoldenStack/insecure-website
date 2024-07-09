@@ -17,3 +17,6 @@ keywords = ["https", "secure", "website"]
 # root nameservers
 # all internet infrastructure i suppose
 # i dunno, here are the actual dependencies:
+axum = "0.7.5"
+tokio = { version = "1.38.0", features = ["full"] }
+anyhow = "1.0.86"
