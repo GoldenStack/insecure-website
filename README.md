@@ -24,6 +24,9 @@ please contact me if you would like to invest in my application
 
 and when i say "soon" i mean right now.
 
-it's just going to be a stupid little app where each user's "profile" shows their username and a little grid of checkboxes. yep. this is all the customization that exists.
+it's just going to be a stupid little app where each user's "profile" shows their username and a little grid of checkboxes.
+
+yep. this is all the customization that exists. i just wanted to make something nice and simple so i could give up the concept of security
+
 
 
