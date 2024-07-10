@@ -2,6 +2,8 @@ use thiserror::Error;
 
 use crate::{HEIGHT, HOSTNAME, WIDTH};
 
+/// A simple query sent to this server
+/// There actually isn't anything more in a query. It's pretty simple.
 #[derive(Debug)]
 pub enum Query<'a> {
     Login { username: &'a str, password: &'a str },
@@ -11,6 +13,8 @@ pub enum Query<'a> {
     Set { x: u8, y: u8, checked: bool, username: &'a str, password: &'a str }
 }
 
+/// Indicates a request could not be parsed for some reason (i.e., a
+/// catastrophic failure).
 #[derive(Error, Debug)]
 pub enum CatastrophicFailure {
     #[error("Bad hostname (expected {HOSTNAME}). Please try again never.")]
@@ -42,6 +46,9 @@ pub enum CatastrophicFailure {
     }
 }
 
+/// Parses the subdomain (all of our data) out of a hostname.
+/// This uses the [HOSTNAME] constant, so make sure to update that when
+/// necessary!
 pub fn parse_host<'a>(host: &'a str) -> Result<&'a str, CatastrophicFailure> {
 
     if !host.ends_with(HOSTNAME) {
@@ -63,8 +70,11 @@ pub fn parse_host<'a>(host: &'a str) -> Result<&'a str, CatastrophicFailure> {
     Ok(host)
 }
 
+/// Parses a query string into a query struct.
+/// Example queries:
+/// set-checkbox-x-5-y-2-to-unchecked-username-goldenstack-password-dosbox074
+/// get-username-goldenstack
 pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure> {
-
 
     // let me know if i can not allocate here somehow
     let sections = string.split("-").collect::<Vec<_>>();
