@@ -102,7 +102,7 @@ pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure
 
             let y = sections[5].parse().ok().filter(|&y| y < HEIGHT).ok_or_else(|| {
                 CatastrophicFailure::IllegalCharacter {
-                    segment: 3,
+                    segment: 5,
                     query: "set".into(),
                 }
             })?;
