@@ -93,33 +93,32 @@ pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure
         "set" => {
             require_params(&sections, ["set", "checkbox", "x", "_", "y", "_", "to", "_", "username", "_", "password", "_"])?;
             
-            let x = sections[3].parse().ok().filter(|&x| x < WIDTH).ok_or_else(|| {
-                CatastrophicFailure::IllegalCharacter {
-                    segment: 3,
-                    query: "set".into(),
-                }
-            })?;
+            let x = require_parse(&sections, 3,
+                |x| x.parse::<u8>().ok().filter(|&x| x < WIDTH))?;
+            let y = require_parse(&sections, 5,
+                |y| y.parse::<u8>().ok().filter(|&y| y < HEIGHT))?;
 
-            let y = sections[5].parse().ok().filter(|&y| y < HEIGHT).ok_or_else(|| {
-                CatastrophicFailure::IllegalCharacter {
-                    segment: 5,
-                    query: "set".into(),
-                }
+            let checked = require_parse(&sections, 7, |s| match s {
+                "checked" => Some(true),
+                "unchecked" => Some(false),
+                _ => None
             })?;
-
-            let checked = match sections[7] {
-                "checked" => true,
-                "unchecked" => false,
-                _ => return Err(CatastrophicFailure::IllegalCharacter {
-                    segment: 7,
-                    query: "set".into(),
-                })
-            };
 
             Ok(Query::Set { x, y, checked, username: sections[9], password: sections[11] })
         }
         _ => Err(CatastrophicFailure::UnknownSubdomainQuery(first.to_string()))
     }
+}
+
+fn require_parse<T, F: Fn(&str) -> Option<T>>(query: &Vec<&str>, segment: usize, parser: F) -> Result<T, CatastrophicFailure>{
+    let string = query.get(segment).unwrap(); // we've already passed it through require_params.
+
+    parser(string).ok_or_else(|| {
+        CatastrophicFailure::IllegalCharacter {
+            segment,
+            query: query.first().unwrap().to_string(),
+        }
+    })
 }
 
 fn require_params<const N: usize>(query: &Vec<&str>, params: [&str; N]) -> Result<(), CatastrophicFailure> {
