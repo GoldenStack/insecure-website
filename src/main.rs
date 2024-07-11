@@ -38,7 +38,7 @@ use response::respond;
 // for some reason web frameworks support placeholders in example.com/PLACEHOLDER
 // but not PLACEHOLDER.example.com. i wonder why.
 
-pub const HOSTNAME: &str = "secure-website.localhost:1472";
+pub const HOSTNAME: &str = ".secure-website.localhost:1472";
 
 pub const WIDTH: u8 = 5;
 pub const HEIGHT: u8 = 5;

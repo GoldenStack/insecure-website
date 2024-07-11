@@ -59,19 +59,13 @@ pub fn parse_host<'a>(host: &'a str) -> Result<&'a str, CatastrophicFailure> {
         return Err(CatastrophicFailure::BadHostname);
     }
 
-    let host = &host[0..host.len()-HOSTNAME.len()];
-
-    if !host.ends_with(".") {
-        return Err(CatastrophicFailure::NoSubdomain);
-    }
-
-    let mut host = &host[0..host.len()-1];
+    let mut host = &host[0..host.len()-HOSTNAME.len()];
 
     if let Some(index) = host.rfind(".") {
         host = &host[index+1..];
     }
 
-    if host.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+    if !host.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
         return Err(CatastrophicFailure::IllegalCharacter);
     }
 
