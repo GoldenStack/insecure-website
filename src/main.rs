@@ -54,8 +54,11 @@ async fn main() -> Result<()> {
     db_initialize(db)?;
 
     let r = arc.clone();
-    let handler = |Host(hostname): Host, request: Request<Body>| async move {
+    let handler = |Host(mut hostname): Host, request: Request<Body>| async move {
         println!("giga nerd request @ {}", hostname);
+
+        // fix any sillies sent over our computing networks :)
+        hostname.make_ascii_lowercase();
     
         let query = match parse_host(&hostname).and_then(parse_query) {
             Ok(q) => q,

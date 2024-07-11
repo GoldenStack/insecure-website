@@ -23,6 +23,13 @@ pub fn respond(query: &Query, db: &DB) -> Html<String> {
             }
         },
         Query::Register { username, password } => {
+            match username.len() {
+                0 => return Html("Trying to register a zero-length username! How special.".to_string()),
+                1..=2 => return Html("Sorry, your username is too short. Three characters at minimum, please.".to_string()),
+                3..=16 => {},
+                17.. => return Html("Sorry, your username is too long. Three characters at minimum, please.".to_string()),
+            };
+
             match db_insert(db, username, password) {
                 Err(e) => Html(format!("An error occurred while validating your username or password: {}", e)),
                 Ok(true) => Html(format!("Your account was registered!")),

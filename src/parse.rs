@@ -39,8 +39,12 @@ pub enum CatastrophicFailure {
         query: String,
     },
 
-    #[error("Illegal character at segment {segment} in query {query}.")]
-    IllegalCharacter {
+    #[error("Illegal character in query. You know what you did.")]
+    IllegalCharacter,
+
+
+    #[error("Could not parse segment {segment} in query {query}.")]
+    Unparseable {
         segment: usize,
         query: String,
     }
@@ -65,6 +69,10 @@ pub fn parse_host<'a>(host: &'a str) -> Result<&'a str, CatastrophicFailure> {
 
     if let Some(index) = host.rfind(".") {
         host = &host[index+1..];
+    }
+
+    if host.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
+        return Err(CatastrophicFailure::IllegalCharacter);
     }
 
     Ok(host)
@@ -124,7 +132,7 @@ fn require_parse<T, F: Fn(&str) -> Option<T>>(query: &Vec<&str>, segment: usize,
     let string = query.get(segment).unwrap(); // we've already passed it through require_params.
 
     parser(string).ok_or_else(|| {
-        CatastrophicFailure::IllegalCharacter {
+        CatastrophicFailure::Unparseable {
             segment,
             query: query.first().unwrap().to_string(),
         }
@@ -145,14 +153,6 @@ fn require_params<const N: usize>(query: &Vec<&str>, params: [&str; N]) -> Resul
     }
 
     for (segment, &str) in params.iter().enumerate().filter(|(_, &s)| s != "_") {
-
-        if !str.chars().all(|c| c.is_ascii_alphanumeric() || c == '-') {
-            return Err(CatastrophicFailure::IllegalCharacter {
-                segment,
-                query: first.into()
-            })
-        }
-
         if query[segment] != str {
             return Err(CatastrophicFailure::ExpectedQueryText {
                 text: str.into(),
