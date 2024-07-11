@@ -21,3 +21,8 @@ axum = "0.7.5"
 tokio = { version = "1.38.0", features = ["full"] }
 anyhow = "1.0.86"
 thiserror = "1.0.61"
+rusqlite = { version = "0.31.0", features = ["bundled"] }
+argon2 = "0.5.3"
+getrandom = "0.2.15"
+r2d2 = "0.8.10"
+r2d2_sqlite = "0.24.0"

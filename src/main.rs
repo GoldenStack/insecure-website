@@ -1,13 +1,18 @@
 pub mod parse;
+pub mod database;
+pub mod response;
 
-use std::ops::{Range, RangeInclusive};
+use std::sync::Arc;
 
 use axum::{
-    body::Body, extract::{Host, Request}, response::Html, routing::get, Router
+    body::Body, extract::Host, http::Request, response::Html, routing::get, Router
 };
 use anyhow::Result;
+use database::db_initialize;
 use parse::{parse_host, parse_query};
-use thiserror::Error;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use response::respond;
 
 // request types:
 
@@ -40,6 +45,29 @@ pub const HEIGHT: u8 = 5;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let manager = SqliteConnectionManager::file("./database.db3");
+    let pool = Pool::new(manager)?;
+    let arc = Arc::new(pool);
+
+    let db = &arc.get()?;
+
+    db_initialize(db)?;
+
+    let r = arc.clone();
+    let handler = |Host(hostname): Host, request: Request<Body>| async move {
+        println!("giga nerd request @ {}", hostname);
+    
+        let query = match parse_host(&hostname).and_then(parse_query) {
+            Ok(q) => q,
+            Err(e) => return Html(format!("{:?}", e))
+        };
+
+        match r.get() {
+            Ok(db) => respond(&query, &db),
+            Err(e) => Html(format!("An error occurred while retrieving the database: {}", e))
+        }
+    };
+
     // no need for multiple handlers because of the incrediblly good design of our app
     let app = Router::new().route("/", get(handler));
 
@@ -56,16 +84,3 @@ async fn main() -> Result<()> {
 }
 
 // sidenote: we can just completely ignore CORS because HEAD requests give us all the information we need
-
-async fn handler(Host(hostname): Host, request: Request<Body>) -> Html<String> {
-    println!("giga nerd request @ {}", hostname);
-
-    let query = match parse_host(&hostname).and_then(parse_query) {
-        Ok(q) => q,
-        Err(e) => return Html(format!("<h1>{:?}</h1>", e))
-    };
-
-    println!("parsed: {:?}", query);
-
-    Html(format!("<h1>{:?}</h1>", query))
-}
