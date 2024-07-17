@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="UTF-8">
+        <title>site</title>
+        <meta name="author" content="GoldenStack">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" href="/assets/golden.png">
+
+        <link rel="preload" href="/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="/assets/style.css">
+
+    </head>
+
+    <body>
+        <h1><s>In</s>secure Website</h1><br>
+
+        <p>security is really too easy nowadays.</p>
+
+        <p>ever since <a href="https://letsencrypt.org/">Let's Encrypt</a>, sites on the web are pretty much secure by default, because everyone has HTTPS.</p>
+        
+        <p>i mean, i only found one billion dollar company last June with a few million exposed records on a public site!</p>
+        
+        <p>this is beside the point though. security is clearly too easy. but what if it wasn't?</p>
+        
+        <p><a href="https://en.wikipedia.org/wiki/Server_Name_Indication">server name indication</a> is a method of making some things on the web easier. i assume. because i really do not know what it's used for except for the fact that it doesn't encrypt the subdomain you're accessing.</p>
+        
+        <p>of course, the obvious next step is to communicate private information within this unencrypted field, just like the old days!</p>
+        
+        <p>once i actually finish this stupid website, you can login to your account by sending a request containing your credentials in the subdomain, such as:</p>
+        
+        <p><u>login-username-goldenstack-password-dosbox074.secure-website.goldenstack.net</u></p>
+        
+        <p>this has the side effect of having a maximum username and password length. but it's fine because it's already an incredible secure website.</p>
+        
+        <p>please contact me if you would like to invest in my application</p>
+
+        <h2>fun facts</h2>
+
+        <br><br>
+        <h4>> ip grabber resistant!</h4>
+        <p></p>
+        
+        <p>
+            think this is an IP grabber? you can use this website entirely from common chat apps like Discord.
+        </p>
+        <p>
+            sending the URL in chat constitutes a valid request, and can be used to interact with this app.
+        </p>
+        <p>
+            relevant data will be returned and embedded in the message.
+        </p>
+
+        <br>
+
+        <h4>> isn't this encrypted either way?</h4>
+        <p></p>
+        
+        <p>
+            i lied. i actually do know what server name indication is. i just thought it would be funny to say i don't.
+        </p>
+        <p>
+            either way, i'm aware of DoH, and i'm happy to say that subdomains are still not encrypted under <a href="https://support.mozilla.org/en-US/kb/firefox-dns-over-https">DNS over HTTPS</a>!
+        </p>
+        <p>
+            this means this website is still gloriously insecure.
+        </p>
+        <p>
+            unfortunately, <a href="https://support.mozilla.org/en-US/kb/understand-encrypted-client-hello">Encrypted Client Hello</a> does actually encrypt this field. so please disable it in order to be able to fully experience this web site!
+        </p>
+    </body>
+
+</html>

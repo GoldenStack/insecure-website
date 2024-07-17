@@ -5,14 +5,14 @@ pub mod response;
 use std::sync::Arc;
 
 use axum::{
-    body::Body, extract::Host, http::Request, response::Html, routing::get, Router
+    body::Body, extract::Host, http::{header::CONTENT_TYPE, Request}, response::Html, routing::get, Router
 };
 use anyhow::Result;
 use database::db_initialize;
 use parse::{parse_host, parse_query};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use response::respond;
+use response::respond_html;
 
 // request types:
 
@@ -66,13 +66,20 @@ async fn main() -> Result<()> {
         };
 
         match r.get() {
-            Ok(db) => respond(&query, &db),
+            Ok(db) => respond_html(&query, &db),
             Err(e) => Html(format!("An error occurred while retrieving the database: {}", e))
         }
     };
 
-    // no need for multiple handlers because of the incrediblly good design of our app
-    let app = Router::new().route("/", get(handler));
+    // no need for multiple handlers with actual behaviour because of the incredible good design of our app
+    // we do need to serve css though
+    let app = Router::new().route("/", get(handler))
+        .route("/assets/style.css", get(|| async move {
+            ([(CONTENT_TYPE, "text/css")], include_bytes!("../public/assets/style.css"))
+        }))
+        .route("/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2", get(|| async move {
+            ([(CONTENT_TYPE, "font/woff2")], include_bytes!("../public/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2"))
+        }));
 
     // port 1472 generated courtesy of random.org
     let listener = tokio::net::TcpListener::bind("127.0.0.1:1472")

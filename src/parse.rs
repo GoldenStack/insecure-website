@@ -6,6 +6,7 @@ use crate::{HEIGHT, HOSTNAME, WIDTH};
 /// There actually isn't anything more in a query. It's pretty simple.
 #[derive(Debug)]
 pub enum Query<'a> {
+    Index,
     Login { username: &'a str, password: &'a str },
     Logout { username: &'a str, password: &'a str },
     Register { username: &'a str, password: &'a str },
@@ -86,6 +87,10 @@ pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure
     };
 
     match *first {
+        "index" => {
+            require_params(&sections, ["index"])?;
+            Ok(Query::Index)
+        }
         "login" => {
             require_params(&sections, ["login", "username", "_", "password", "_"])?;
             Ok(Query::Login { username: sections[2], password: sections[4] })
