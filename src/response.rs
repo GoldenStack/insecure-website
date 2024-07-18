@@ -15,7 +15,11 @@ pub fn respond(query: &Query, db: &DB) -> String {
         Query::LoginAttempt { username, password } => {
             match db_authenticate(db, username, password) {
                 Err(e) => credentials_error(e),
-                Ok(true) => "Login success!".to_string(),
+                Ok(true) => match db_retrieve(db, username) {
+                    Err(e) => error(&format!("an error occurred while retrieving the data for user {}:", username), e),
+                    Ok(None) => error_str("invalid username", &format!("could not find a user with the name {}!", username)),
+                    Ok(Some(user)) => set(username, password, user.boxes()),
+                },
                 Ok(false) => invalid_credentials().to_string(),
             }
         },
@@ -32,7 +36,11 @@ pub fn respond(query: &Query, db: &DB) -> String {
                 1..=2 => error_str("invalid username", "sorry, your username is too short. three characters at minimum, please"),
                 3..=16 => match db_insert(db, username, password) {
                     Err(e) => credentials_error(e),
-                    Ok(true) => format!("Your account was registered!"),
+                    Ok(true) => match db_retrieve(db, username) {
+                        Err(e) => error(&format!("an error occurred while retrieving the data for user {}:", username), e),
+                        Ok(None) => error_str("invalid username", &format!("could not find a user with the name {}!", username)),
+                        Ok(Some(user)) => set(username, password, user.boxes()),
+                    },
                     Ok(false) => error_str("invalid username", "sorry, but an account with that username already exists."),
                 },
                 17.. => error_str("invalid username", "sorry, your username is too long. sixteen characters at maximum, please"),
@@ -51,7 +59,11 @@ pub fn respond(query: &Query, db: &DB) -> String {
                 Ok(false) => invalid_credentials().to_string(),
                 Ok(true) => match db_update(db, username, |data| data ^ (0b1 << (y * WIDTH + x))) {
                     Err(e) => credentials_error(e),
-                    Ok(_) => format!("({}, {}) toggled!", x, y),
+                    Ok(_) => match db_retrieve(db, username) {
+                        Err(e) => error(&format!("an error occurred while retrieving the data for user {}:", username), e),
+                        Ok(None) => error_str("invalid username", &format!("could not find a user with the name {}!", username)),
+                        Ok(Some(user)) => set(username, password, user.boxes()),
+                    },
                 },
             }
         },
@@ -77,7 +89,21 @@ pub struct Get<'a> {
     pub boxes: u64,
 }
 
+#[derive(Template)]
+#[template(path = "set.html")]
+pub struct Set<'a> {
+    pub username: &'a str,
+    pub password: &'a str,
+    pub boxes: u64,
+}
+
 impl<'a> Get<'a> {
+    pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
+        if (self.boxes >> (y * WIDTH + x)) & 1 == 1 { " checked" } else { "" }
+    }
+}
+
+impl<'a> Set<'a> {
     pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
         if (self.boxes >> (y * WIDTH + x)) & 1 == 1 { " checked" } else { "" }
     }
@@ -132,5 +158,11 @@ pub fn invalid_credentials() -> &'static str {
 pub fn get<'a>(username: &'a str, boxes: u64) -> String {
     Get {
         username, boxes
+    }.render().unwrap()
+}
+
+pub fn set<'a>(username: &'a str, password: &'a str, boxes: u64) -> String {
+    Set {
+        username, password, boxes
     }.render().unwrap()
 }
