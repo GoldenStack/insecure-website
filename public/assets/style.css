@@ -1,7 +1,7 @@
 /* Atkinson Hyperlegible */
 @font-face {
     font-family: "Atkinson Hyperlegible";
-    src: url("/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2");
+    src: url("{{ crate::PREFIX }}assets-font{{ crate::HOSTNAME }}");
 }
 
 html {

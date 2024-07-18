@@ -9,8 +9,8 @@
 
         <link rel="icon" href="/assets/golden.png">
 
-        <link rel="preload" href="/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2" as="font" type="font/woff2" crossorigin>
-        <link rel="stylesheet" href="/assets/style.css">
+        <link rel="preload" href="{{ crate::PREFIX }}assets-font{{ crate::HOSTNAME }}" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="{{ crate::PREFIX }}assets-css{{ crate::HOSTNAME }}">
 
     </head>
 
@@ -64,14 +64,5 @@
             height: 1.5rem;
         }
     </style>
-
-    <script>
-
-        document.getElementById("register").onclick = e => {
-            let username = document.getElementById("username").value;
-            let password = document.getElementById("password").value;
-            window.location = `{{ crate::PREFIX }}register-username-${username}-password-${password}{{ crate::HOSTNAME }}`;
-        }
-    </script>
 
 </html>

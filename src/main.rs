@@ -2,11 +2,11 @@ pub mod parse;
 pub mod database;
 pub mod response;
 
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use askama_axum::Response;
 use axum::{
-    body::Body, extract::Host, http::{header::CONTENT_TYPE, Request}, response::IntoResponse, routing::get, Router
+    body::Body, extract::Host, http::{header::{ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE}, Request}, response::IntoResponse, routing::get, Router
 };
 use anyhow::Result;
 use database::db_initialize;
@@ -74,8 +74,8 @@ async fn main() -> Result<()> {
         };
 
         let query = match host {
-            "assets-css" => return ([(CONTENT_TYPE, "text/css; charset=utf-8")], include_bytes!("../public/assets/style.css")).into_response(),
-            "assets-font" => return ([(CONTENT_TYPE, "font/woff2")], include_bytes!("../public/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2")).into_response(),
+            "assets-css" => return ([(CONTENT_TYPE, "text/css; charset=utf-8"), (ACCESS_CONTROL_ALLOW_ORIGIN, "*")], css()).into_response(),
+            "assets-font" => return ([(CONTENT_TYPE, "font/woff2"), (ACCESS_CONTROL_ALLOW_ORIGIN, "*")], include_bytes!("../public/assets/Atkinson-Hyperlegible-Regular-102a.woff2")).into_response(),
             _ => match parse_query(host) {
                 Ok(q) => q,
                 Err(e) => return html(error("bad query", &e.to_string())),
@@ -89,13 +89,7 @@ async fn main() -> Result<()> {
     };
 
     // no need for multiple handlers because of the incredible good design of our app
-    let app = Router::new().route("/", get(handler))
-        .route("/assets/style.css", get(|| async move {
-            ([(CONTENT_TYPE, "text/css; charset=utf-8")], include_bytes!("../public/assets/style.css"))
-        }))
-        .route("/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2", get(|| async move {
-            ([(CONTENT_TYPE, "font/woff2")], include_bytes!("../public/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2"))
-        }));
+    let app = Router::new().route("/", get(handler));
 
     // port 1472 generated courtesy of random.org
     let listener = tokio::net::TcpListener::bind("127.0.0.1:1472")
@@ -107,6 +101,14 @@ async fn main() -> Result<()> {
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
+}
+
+pub fn css() -> &'static str {
+    static CSS: OnceLock<String> = OnceLock::new();
+    CSS.get_or_init(|| include_str!("../public/assets/style.css")
+        .replace("{{ crate::PREFIX }}", crate::PREFIX)
+        .replace("{{ crate::HOSTNAME }}", crate::HOSTNAME)
+    )
 }
 
 // sidenote: we can just completely ignore CORS because HEAD requests give us all the information we need
