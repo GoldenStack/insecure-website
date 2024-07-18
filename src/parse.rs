@@ -13,7 +13,7 @@ pub enum Query<'a> {
     RegisterAttempt { username: &'a str, password: &'a str },
     Logout { username: &'a str, password: &'a str },
     Get { username: &'a str },
-    Toggle { x: u32, y: u32, username: &'a str, password: &'a str }
+    Set { x: u32, y: u32, checked: bool, username: &'a str, password: &'a str }
 }
 
 /// Indicates a request could not be parsed for some reason (i.e., a
@@ -117,15 +117,21 @@ pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure
             require_params(&sections, ["get", "username", "_"])?;
             Ok(Query::Get { username: sections[2] })
         }
-        "toggle" => {
-            require_params(&sections, ["toggle", "_", "_", "username", "_", "password", "_"])?;
+        "check" | "uncheck" => {
+            require_params(&sections, ["_", "_", "_", "username", "_", "password", "_"])?;
             
             let x = require_parse(&sections, 1,
                 |x| x.parse::<u32>().ok().filter(|&x| x < WIDTH))?;
             let y = require_parse(&sections, 2,
                 |y| y.parse::<u32>().ok().filter(|&y| y < HEIGHT))?;
 
-            Ok(Query::Toggle { x, y, username: sections[4], password: sections[6] })
+            let checked = require_parse(&sections, 0, |s| match s {
+                "check" => Some(true),
+                "uncheck" => Some(false),
+                _ => None
+            })?;
+
+            Ok(Query::Set { x, y, checked, username: sections[4], password: sections[6] })
         }
         _ => Err(CatastrophicFailure::UnknownSubdomainQuery(first.to_string()))
     }

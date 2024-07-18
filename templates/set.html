@@ -38,7 +38,7 @@
                 <!-- look at this excess indentation! -->
                 {% for y in 0..crate::HEIGHT %}
                     {% for x in 0..crate::WIDTH -%}
-                        <input type="checkbox" autocomplete="off" onclick="window.location='{{ crate::PREFIX }}toggle-{{ x }}-{{ y }}-username-{{ username}}-password-{{ password }}{{ crate::HOSTNAME }}'"{{ Self::checked(self, x, y) }}>
+                        <input type="checkbox" autocomplete="off" onclick="window.location='{{ crate::PREFIX }}{{ Self::prefix(self, x, y) }}-{{ x }}-{{ y }}-username-{{ username}}-password-{{ password }}{{ crate::HOSTNAME }}'"{{ Self::checked(self, x, y) }}>
                     {%- endfor %}
                     <br>
                 {% endfor %}

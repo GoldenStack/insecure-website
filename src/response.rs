@@ -53,11 +53,11 @@ pub fn respond(query: &Query, db: &DB) -> String {
                 Ok(Some(user)) => get(username, user.boxes()),
             }
         },
-        Query::Toggle { x, y, username, password } => {
+        Query::Set { x, y, checked, username, password } => {
             match db_authenticate(db, username, password) {
                 Err(e) => credentials_error(e),
                 Ok(false) => invalid_credentials().to_string(),
-                Ok(true) => match db_update(db, username, |data| data ^ (0b1 << (y * WIDTH + x))) {
+                Ok(true) => match db_update(db, username, |data| set_box(data, *x, *y, *checked)) {
                     Err(e) => credentials_error(e),
                     Ok(_) => match db_retrieve(db, username) {
                         Err(e) => error(&format!("an error occurred while retrieving the data for user {}:", username), e),
@@ -99,14 +99,27 @@ pub struct Set<'a> {
 
 impl<'a> Get<'a> {
     pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
-        if (self.boxes >> (y * WIDTH + x)) & 1 == 1 { " checked" } else { "" }
+        if get_box(self.boxes, *x, *y) { " checked" } else { "" }
     }
 }
 
 impl<'a> Set<'a> {
     pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
-        if (self.boxes >> (y * WIDTH + x)) & 1 == 1 { " checked" } else { "" }
+        if get_box(self.boxes, *x, *y) { " checked" } else { "" }
     }
+
+    pub fn prefix(&self, x: &u32, y: &u32) -> &'static str {
+        if get_box(self.boxes, *x, *y) { "uncheck" } else { "check" }
+    }
+}
+
+pub fn get_box(boxes: u64, x: u32, y: u32) -> bool {
+    (boxes >> (y * WIDTH + x)) & 1 == 1
+}
+
+pub fn set_box(boxes: u64, x: u32, y: u32, checked: bool) -> u64 {
+    let mask = 0b1 << (y * WIDTH + x);
+    if checked { boxes | mask } else { boxes & !mask }
 }
 
 #[derive(Template)]
