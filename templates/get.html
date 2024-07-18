@@ -34,8 +34,12 @@
 
         <div style="display: flex; justify-content: center;">
             <div>
+                <!-- the templating library i'm using really shows, doesn't it -->
+                <!-- look at this excess indentation! -->
                 {% for y in 0..5 %}
-                    {% for x in 0..5 %}<input type="checkbox" autocomplete="off"{{ Self::checked(self, x, y) }}>{% endfor %}
+                    {% for x in 0..5 -%}
+                        <input type="checkbox" autocomplete="off"{{ Self::checked(self, x, y) }}>
+                    {%- endfor %}
                     <br>
                 {% endfor %}
             </div>
