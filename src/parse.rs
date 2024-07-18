@@ -7,9 +7,11 @@ use crate::{HEIGHT, HOSTNAME, WIDTH};
 #[derive(Debug)]
 pub enum Query<'a> {
     Index,
-    Login { username: &'a str, password: &'a str },
+    Login,
+    Register,
+    LoginAttempt { username: &'a str, password: &'a str },
+    RegisterAttempt { username: &'a str, password: &'a str },
     Logout { username: &'a str, password: &'a str },
-    Register { username: &'a str, password: &'a str },
     Get { username: &'a str },
     Set { x: u8, y: u8, checked: bool, username: &'a str, password: &'a str }
 }
@@ -92,16 +94,24 @@ pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure
             Ok(Query::Index)
         }
         "login" => {
+            if require_params(&sections, ["login"]).is_ok() {
+                return Ok(Query::Login);
+            }
+
             require_params(&sections, ["login", "username", "_", "password", "_"])?;
-            Ok(Query::Login { username: sections[2], password: sections[4] })
+            Ok(Query::LoginAttempt { username: sections[2], password: sections[4] })
         }
         "logout" => {
             require_params(&sections, ["logout", "username", "_", "password", "_"])?;
             Ok(Query::Logout { username: sections[2], password: sections[4] })
         }
         "register" => {
+            if require_params(&sections, ["register"]).is_ok() {
+                return Ok(Query::Register);
+            }
+
             require_params(&sections, ["register", "username", "_", "password", "_"])?;
-            Ok(Query::Register { username: sections[2], password: sections[4] })
+            Ok(Query::RegisterAttempt { username: sections[2], password: sections[4] })
         }
         "get" => {
             require_params(&sections, ["get", "username", "_"])?;

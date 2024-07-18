@@ -136,3 +136,36 @@ h1 {
     line-height: 2rem;
 }
 
+
+/* Navbar */
+.header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.navbar {
+    display: flex;
+}
+
+.header .navbar h3::after {
+    content: "|";
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.header .navbar h3:last-child::after {
+    content: "";
+}
+
+/* Forms */
+input, button {
+    height: 1.5rem;
+    font-size: 1rem;
+}
+
+
+button {
+    padding: 0 0.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+}

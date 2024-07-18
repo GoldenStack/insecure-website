@@ -14,8 +14,18 @@
 
     </head>
 
-    <body>
-        <h1><s>In</s>secure Website</h1><br>
+    <body>        
+        <div class="header">
+            <div class="title">
+                <h1><s>In</s>secure Website</h1>
+            </div>
+            <div class="navbar">
+                <h3><a href="{{ crate::PREFIX }}index{{ crate::HOSTNAME }}">home</a></h3>
+                <h3><a href="{{ crate::PREFIX }}login{{ crate::HOSTNAME }}">login</a></h3>
+            </div>
+        </div>
+
+        <br>
 
         <p>security is really too easy nowadays.</p>
 
@@ -31,7 +41,7 @@
         
         <p>once i actually finish this stupid website, you can login to your account by sending a request containing your credentials in the subdomain, such as:</p>
         
-        <p><u>login-username-goldenstack-password-dosbox074.secure-website.goldenstack.net</u></p>
+        <p><u>login-username-goldenstack-password-dosbox074{{ crate::HOSTNAME }}</u></p>
         
         <p>this has the side effect of having a maximum username and password length. but it's fine because it's already an incredible secure website.</p>
         

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="UTF-8">
+        <title>site</title>
+        <meta name="author" content="GoldenStack">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" href="/assets/golden.png">
+
+        <link rel="preload" href="/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="/assets/style.css">
+
+    </head>
+
+    <body>        
+        <div class="header">
+            <div class="title">
+                <h1><s>In</s>secure Website</h1>
+            </div>
+            <div class="navbar">
+                <h3><a href="{{ crate::PREFIX }}index{{ crate::HOSTNAME }}">home</a></h3>
+                <h3><a href="{{ crate::PREFIX }}login{{ crate::HOSTNAME }}">login</a></h3>
+            </div>
+        </div>
+
+        <br>
+
+        <p>welcome to my login page.</p>
+
+        <p>
+            put your credentials below and it will redirect you to the subdomain with those credentials, e.g.
+            <br>
+            <u>{{ crate::PREFIX }}login-username-goldenstack-password-dosbox074{{ crate::HOSTNAME }}</u>
+        </p>
+
+        <p>you can also manually add that to the URL yourself, because this is such an accessible page.</p>
+        
+        <div style="display: flex; justify-content: center;">
+            <div>
+                <label for="username">username</label><br>
+                <input type="text" id="username" placeholder="goldenstack" required>
+                <br>
+                <h style="font-size: 0.7rem;">3-16 characters (yes this is verified server-side)</h>
+    
+                <br><br>
+        
+                <label for="password">password</label><br>
+                <input type="password" id="password" placeholder="•••••••••" required>
+                <br>
+                <h style="font-size: 0.7rem;">feel free to make this as insecure as you want :)</h>
+
+                <br><br>
+                
+                <div style="text-align: center;">
+                    <button type="button" id="login">login</button>
+                </div>
+                
+                <hr>
+                
+                <div style="text-align: center;">
+                    <p>don't have an account?</p>
+
+                    <a href="{{ crate::PREFIX }}register{{ crate::HOSTNAME }}">
+                        <button type="button" id="register">register</button>
+                    </a>
+                    
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        document.getElementById("login").onclick = e => {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            window.location = `{{ crate::PREFIX }}login-username-${username}-password-${password}{{ crate::HOSTNAME }}`;
+        }
+    </script>
+
+</html>

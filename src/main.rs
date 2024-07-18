@@ -4,15 +4,17 @@ pub mod response;
 
 use std::sync::Arc;
 
+use askama::Template;
 use axum::{
-    body::Body, extract::Host, http::{header::CONTENT_TYPE, Request}, response::Html, routing::get, Router
+    body::Body, extract::Host, http::{header::CONTENT_TYPE, Request}, routing::get, Router
 };
 use anyhow::Result;
 use database::db_initialize;
 use parse::{parse_host, parse_query};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use response::respond_html;
+use response::respond;
+use crate::response::Error;
 
 // request types:
 
@@ -38,6 +40,7 @@ use response::respond_html;
 // for some reason web frameworks support placeholders in example.com/PLACEHOLDER
 // but not PLACEHOLDER.example.com. i wonder why.
 
+pub const PREFIX: &str = "http://";
 pub const HOSTNAME: &str = ".secure-website.localhost:1472";
 
 pub const WIDTH: u8 = 5;
@@ -62,12 +65,12 @@ async fn main() -> Result<()> {
     
         let query = match parse_host(&hostname).and_then(parse_query) {
             Ok(q) => q,
-            Err(e) => return Html(format!("{:?}", e))
+            Err(e) => return ([(CONTENT_TYPE, "text/html; charset=utf-8")], format!("{:?}", e))
         };
 
         match r.get() {
-            Ok(db) => respond_html(&query, &db),
-            Err(e) => Html(format!("An error occurred while retrieving the database: {}", e))
+            Ok(db) => ([(CONTENT_TYPE, "text/html; charset=utf-8")], respond(&query, &db)),
+            Err(e) => ([(CONTENT_TYPE, "text/html; charset=utf-8")], Error { header: "An error occurred while retrieving the database:", description: &e.to_string()}.render().unwrap())
         }
     };
 
@@ -75,7 +78,7 @@ async fn main() -> Result<()> {
     // we do need to serve css though
     let app = Router::new().route("/", get(handler))
         .route("/assets/style.css", get(|| async move {
-            ([(CONTENT_TYPE, "text/css")], include_bytes!("../public/assets/style.css"))
+            ([(CONTENT_TYPE, "text/css; charset=utf-8")], include_bytes!("../public/assets/style.css"))
         }))
         .route("/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2", get(|| async move {
             ([(CONTENT_TYPE, "font/woff2")], include_bytes!("../public/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2"))

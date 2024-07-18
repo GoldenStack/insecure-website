@@ -4,7 +4,7 @@ use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ErrorCode;
 
-type DB = PooledConnection<SqliteConnectionManager>;
+pub type DB = PooledConnection<SqliteConnectionManager>;
 
 #[derive(Debug)]
 pub struct User {

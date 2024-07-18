@@ -1,61 +1,57 @@
+use std::sync::OnceLock;
+
 use askama::Template;
-use axum::response::Html;
-use r2d2::PooledConnection;
-use r2d2_sqlite::SqliteConnectionManager;
 
-use crate::{database::{db_authenticate, db_insert, db_retrieve, db_update}, parse::Query};
+use crate::{database::{db_authenticate, db_insert, db_retrieve, db_update, DB}, parse::Query};
 
-type DB = PooledConnection<SqliteConnectionManager>;
+pub type Response = ([(axum::http::HeaderName, &'static str); 1], String);
 
-pub fn respond_html(query: &Query, db: &DB) -> Html<String> {
-    Html(respond(query, db))
-}
 
 pub fn respond(query: &Query, db: &DB) -> String {
     match query {
-        Query::Index => {
-            Index.render().unwrap()
-        },
-        Query::Login { username, password } => {
+        Query::Index => index().to_string(),
+        Query::Login => login().to_string(),
+        Query::Register => register().to_string(),
+        Query::LoginAttempt { username, password } => {
             match db_authenticate(db, username, password) {
-                Err(e) => Error { header: "An error occurred while validating your username or password: ", description: &e.to_string()}.render().unwrap(),
+                Err(e) => credentials_error(e),
                 Ok(true) => "Login success!".to_string(),
-                Ok(false) => INVALID_CREDENTIALS.render().unwrap(),
+                Ok(false) => invalid_credentials().to_string(),
             }
         },
         Query::Logout { username, password } => {
             match db_authenticate(db, username, password) {
-                Err(e) => Error { header: "An error occurred while validating your username or password: ", description: &e.to_string()}.render().unwrap(),
+                Err(e) => credentials_error(e),
                 Ok(true) => "Logout success!".to_string(),
-                Ok(false) => INVALID_CREDENTIALS.render().unwrap(), // However, we don't care because you were just logging out.
+                Ok(false) => invalid_credentials().to_string(), // However, we don't care because you were just logging out.
             }
         },
-        Query::Register { username, password } => {
+        Query::RegisterAttempt { username, password } => {
             match username.len() {
-                0 => "Trying to register a zero-length username! How special.".to_string(),
-                1..=2 => "Sorry, your username is too short. Three characters at minimum, please.".to_string(),
+                0 => error_str("invalid username", "trying to register a zero-length username! how special."),
+                1..=2 => error_str("invalid username", "sorry, your username is too short. three characters at minimum, please"),
                 3..=16 => match db_insert(db, username, password) {
-                    Err(e) => format!("An error occurred while validating your username or password: {}", e),
+                    Err(e) => credentials_error(e),
                     Ok(true) => format!("Your account was registered!"),
-                    Ok(false) => format!("An account with the username '{}' already exists!", username),
+                    Ok(false) => error_str("invalid username", "sorry, but an account with that username already exists."),
                 },
-                17.. => "Sorry, your username is too long. Three characters at minimum, please.".to_string(),
+                17.. => error_str("invalid username", "sorry, your username is too long. sixteen characters at maximum, please"),
             }
         },
         Query::Get { username } => {
             match db_retrieve(db, username) {
-                Err(e) => Error { header: &format!("An error occurred while retrieving the data for user {}:", username), description: &e.to_string()}.render().unwrap(),
-                Ok(None) => format!("Could not find a user with the name {}!", username),
+                Err(e) => error(&format!("an error occurred while retrieving the data for user {}:", username), e),
+                Ok(None) => error_str("invalid username", &format!("could not find a user with the name {}!", username)),
                 Ok(Some(user)) => format!("Data for username {}:\n{:025b}", username, user.boxes()),
             }
         },
         Query::Set { x, y, checked, username, password } => {
             let mask = 0b1 << (y * 5 + x);
             match db_authenticate(db, username, password) {
-                Err(e) => Error { header: "An error occurred while validating your username or password: ", description: &e.to_string()}.render().unwrap(),
-                Ok(false) => INVALID_CREDENTIALS.render().unwrap(),
+                Err(e) => credentials_error(e),
+                Ok(false) => invalid_credentials().to_string(),
                 Ok(true) => match db_update(db, username, |data| if *checked { data | mask } else { data & !mask }) {
-                    Err(e) => Error { header: "An error occurred while validating your username or password: ", description: &e.to_string()}.render().unwrap(),
+                    Err(e) => credentials_error(e),
                     Ok(_) => format!("({}, {}) set to {}!", x, y, checked),
                 },
             }
@@ -65,16 +61,58 @@ pub fn respond(query: &Query, db: &DB) -> String {
 
 #[derive(Template)]
 #[template(path = "index.html")]
-struct Index;
+pub struct Index;
+
+#[derive(Template)]
+#[template(path = "login.html")]
+pub struct Login;
+
+#[derive(Template)]
+#[template(path = "register.html")]
+pub struct Register;
 
 #[derive(Template)]
 #[template(path = "error.html")]
-struct Error<'a> {
-    header: &'a str,
-    description: &'a str,
+pub struct Error<'a> {
+    pub header: &'a str,
+    pub description: &'a str,
 }
 
-const INVALID_CREDENTIALS: Error = Error {
-    header: "invalid credentials!",
-    description: "unfortunately, either your username or password was incorrect.",
-};
+pub fn index() -> &'static str {
+    static INDEX: OnceLock<String> = OnceLock::new();
+    INDEX.get_or_init(|| Index.render().unwrap())
+}
+
+pub fn login() -> &'static str {
+    static LOGIN: OnceLock<String> = OnceLock::new();
+    LOGIN.get_or_init(|| Login.render().unwrap())
+}
+
+pub fn register() -> &'static str {
+    static REGISTER: OnceLock<String> = OnceLock::new();
+    REGISTER.get_or_init(|| Register.render().unwrap())
+}
+
+pub fn error_str<'a>(header: &'a str, description: &'a str) -> String {
+    Error {
+        header, description
+    }.render().unwrap()
+}
+
+pub fn error<'a>(message: &'a str, error: anyhow::Error) -> String {
+    error_str(message, &error.to_string())
+}
+
+pub fn credentials_error(e: anyhow::Error) -> String {
+    error("an error occurred while validating your username or password: ", e)
+}
+
+pub fn invalid_credentials() -> &'static str {
+    static CREDS: OnceLock<String> = OnceLock::new();
+    CREDS.get_or_init(|| {
+        Error {
+            header: "invalid credentials!",
+            description: "unfortunately, either your username or password was incorrect.",
+        }.render().unwrap()
+    })
+}
