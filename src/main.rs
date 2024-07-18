@@ -1,4 +1,3 @@
-pub mod parse;
 pub mod database;
 pub mod response;
 
@@ -11,10 +10,9 @@ use axum::{
 use anyhow::Result;
 use database::db_initialize;
 use dotenv_codegen::dotenv;
-use parse::{parse_host, parse_query};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use response::{error, respond};
+use response::{error, handle_query, parse_host};
 
 // request types:
 
@@ -70,20 +68,17 @@ async fn main() -> Result<()> {
 
         let host = match parse_host(&hostname) {
             Ok(host) => host,
-            Err(e) => return html(error("bad hostname", &e.to_string())),
+            Err(e) => return e,
         };
 
-        let query = match host {
+        match host {
             "assets-css" => return ([(CONTENT_TYPE, "text/css; charset=utf-8"), (ACCESS_CONTROL_ALLOW_ORIGIN, "*")], css()).into_response(),
             "assets-font" => return ([(CONTENT_TYPE, "font/woff2"), (ACCESS_CONTROL_ALLOW_ORIGIN, "*")], include_bytes!("../public/assets/Atkinson-Hyperlegible-Regular-102a.woff2")).into_response(),
-            _ => match parse_query(host) {
-                Ok(q) => q,
-                Err(e) => return html(error("bad query", &e.to_string())),
-            }
+            _ => {}
         };
 
         match r.get() {
-            Ok(db) => html(respond(&query, &db)),
+            Ok(db) => html(handle_query(&db, host)),
             Err(e) => html(error("an error occurred while retrieving the database:", &e.to_string()))
         }
     };
