@@ -108,7 +108,7 @@ fn require_parse<T, F: Fn(&str) -> Option<T>>(query: &Vec<&str>, segment: usize,
 }
 
 fn check<const N: usize>(query: &Vec<&str>, params: [&str; N]) -> bool {
-    params.iter()
+    query.len() == N && params.iter()
         .enumerate()
         .filter(|(_, &s)| s != "_")
         .all(|(segment, &str)| query[segment] == str)
