@@ -110,5 +110,3 @@ pub fn css() -> &'static str {
         .replace("{{ crate::HOSTNAME }}", crate::HOSTNAME)
     )
 }
-
-// sidenote: we can just completely ignore CORS because HEAD requests give us all the information we need

@@ -1,13 +1,10 @@
 <!DOCTYPE html>
 <html>
-
     <head>
         <meta charset="UTF-8">
         <title>insecure website</title>
         <meta name="author" content="GoldenStack">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
-        <link rel="icon" href="/assets/golden.png">
 
         <link rel="preload" href="{{ crate::PREFIX }}assets-font{{ crate::HOSTNAME }}" as="font" type="font/woff2" crossorigin>
         <link rel="stylesheet" href="{{ crate::PREFIX }}assets-css{{ crate::HOSTNAME }}">
@@ -81,6 +78,38 @@
         <p>
             unfortunately, <a href="https://support.mozilla.org/en-US/kb/understand-encrypted-client-hello">Encrypted Client Hello</a> does actually encrypt this field. so please disable it in order to be able to fully experience this web site!
         </p>
+
+        <br>
+
+        <h4>> CORS-free!</h4>
+        <p>
+            ok, i lied again. there actually is CORS for the stylesheet and font:
+        </p>
+        <ul>
+            <li><a href="{{ crate::PREFIX }}assets-font{{ crate::HOSTNAME }}">{{ crate::PREFIX }}assets-font{{ crate::HOSTNAME }}</a></li>
+            <li><a href="{{ crate::PREFIX }}assets-css{{ crate::HOSTNAME }}">{{ crate::PREFIX }}assets-css{{ crate::HOSTNAME }}</a></li>
+        </ul>
+        <p>
+            but other than that, no CORS is needed! browsers send HEAD requests to confirm CORS, but this website doesn't care about which type of request is sent ! so it works either way.
+        </p>
+        <p>
+            also, most logic is handled via redirects anyway, so that isn't an issue either.
+        </p>
+
+        <br><br><br>
+        <hr>
+        <div class="footer">
+            <div>
+                <p style="font-size: 0.7rem; margin-top: 0;">what did you expect in the footer? a cookie?</p>
+            </div>
+            <div>
+                <p style="font-size: 0.7rem; margin-top: 0;">
+                    <s>In</s>secure Website © 2024 GoldenStack | All Rights Reserved
+                </p>
+            </div>
+        </div>
+        <br><br>
+
     </body>
 
 </html>
