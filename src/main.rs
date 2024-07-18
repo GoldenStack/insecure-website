@@ -43,8 +43,8 @@ use crate::response::Error;
 pub const PREFIX: &str = "http://";
 pub const HOSTNAME: &str = ".secure-website.localhost:1472";
 
-pub const WIDTH: u8 = 5;
-pub const HEIGHT: u8 = 5;
+pub const WIDTH: u32 = 5;
+pub const HEIGHT: u32 = 5;
 
 #[tokio::main]
 async fn main() -> Result<()> {

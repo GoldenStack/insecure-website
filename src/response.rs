@@ -2,7 +2,7 @@ use std::sync::OnceLock;
 
 use askama::Template;
 
-use crate::{database::{db_authenticate, db_insert, db_retrieve, db_update, DB}, parse::Query};
+use crate::{database::{db_authenticate, db_insert, db_retrieve, db_update, DB}, parse::Query, WIDTH};
 
 pub type Response = ([(axum::http::HeaderName, &'static str); 1], String);
 
@@ -45,14 +45,13 @@ pub fn respond(query: &Query, db: &DB) -> String {
                 Ok(Some(user)) => get(username, user.boxes()),
             }
         },
-        Query::Set { x, y, checked, username, password } => {
-            let mask = 0b1 << (y * 5 + x);
+        Query::Toggle { x, y, username, password } => {
             match db_authenticate(db, username, password) {
                 Err(e) => credentials_error(e),
                 Ok(false) => invalid_credentials().to_string(),
-                Ok(true) => match db_update(db, username, |data| if *checked { data | mask } else { data & !mask }) {
+                Ok(true) => match db_update(db, username, |data| data ^ (0b1 << (y * WIDTH + x))) {
                     Err(e) => credentials_error(e),
-                    Ok(_) => format!("({}, {}) set to {}!", x, y, checked),
+                    Ok(_) => format!("({}, {}) toggled!", x, y),
                 },
             }
         },
@@ -80,7 +79,7 @@ pub struct Get<'a> {
 
 impl<'a> Get<'a> {
     pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
-        if (self.boxes >> (y * 5 + x)) & 1 == 1 { " checked" } else { "" }
+        if (self.boxes >> (y * WIDTH + x)) & 1 == 1 { " checked" } else { "" }
     }
 }
 
