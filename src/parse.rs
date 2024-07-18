@@ -23,28 +23,11 @@ pub enum CatastrophicFailure {
     #[error("Bad hostname (expected {HOSTNAME}). Please try again never.")]
     BadHostname,
 
-    #[error("No subdomain. secure-website transmits all information to the server through the subdomain.")]
-    NoSubdomain,
-
-    #[error("Unknown subdomain query {0}.")]
-    UnknownSubdomainQuery(String),
-
-    #[error("Expected {count} segments for query {query}")]
-    InvalidQueryLength {
-        count: usize,
-        query: String,
-    },
-
-    #[error("Expected text {text} at segment {segment} in query {query}.")]
-    ExpectedQueryText {
-        text: String,
-        segment: usize,
-        query: String,
-    },
+    #[error("Unknown subdomain query. insecure-website transmits all information to the server through the subdomain.")]
+    UnknownSubdomainQuery,
 
     #[error("Illegal character in query. You know what you did.")]
     IllegalCharacter,
-
 
     #[error("Could not parse segment {segment} in query {query}.")]
     Unparseable {
@@ -77,68 +60,44 @@ pub fn parse_host<'a>(host: &'a str) -> Result<&'a str, CatastrophicFailure> {
 
 /// Parses a query string into a query struct.
 /// Example queries:
-/// set-checkbox-x-5-y-2-to-unchecked-username-goldenstack-password-dosbox074
+/// check-2-2-username-goldenstack-password-dosbox074
 /// get-username-goldenstack
 pub fn parse_query<'a>(string: &'a str) -> Result<Query<'a>, CatastrophicFailure> {
 
     // let me know if i can not allocate here somehow
-    let sections = string.split("-").collect::<Vec<_>>();
+    match &string.split("-").collect::<Vec<_>>() {
+        s if check(s, ["index"]) => Ok(Query::Index),
+        s if check(s, ["login"]) => Ok(Query::Login),
+        s if check(s, ["register"]) => Ok(Query::Register),
+        s if check(s, ["login", "username", "_", "password", "_"]) =>
+            Ok(Query::LoginAttempt { username: s[2], password: s[4] }),
+        s if check(s, ["logout", "username", "_", "password", "_"]) =>
+            Ok(Query::Logout { username: s[2], password: s[4] }),
+        s if check(s, ["register", "username", "_", "password", "_"]) =>
+            Ok(Query::RegisterAttempt { username: s[2], password: s[4] }),
+        s if check(s, ["get", "username", "_"]) => Ok(Query::Get { username: s[2] }),
+        s if check(s, ["check", "_", "_", "username", "_", "password", "_"])
+            || check(s, ["uncheck", "_", "_", "username", "_", "password", "_"]) => {
+                let x = require_parse(&s, 1,
+                    |x| x.parse::<u32>().ok().filter(|&x| x < WIDTH))?;
+                let y = require_parse(&s, 2,
+                    |y| y.parse::<u32>().ok().filter(|&y| y < HEIGHT))?;
 
-    let Some(first) = sections.get(0) else {
-        return Err(CatastrophicFailure::NoSubdomain);
-    };
+                let checked = require_parse(&s, 0, |s| match s {
+                    "check" => Some(true),
+                    "uncheck" => Some(false),
+                    _ => None
+                })?;
 
-    match *first {
-        "index" => {
-            require_params(&sections, ["index"])?;
-            Ok(Query::Index)
-        }
-        "login" => {
-            if require_params(&sections, ["login"]).is_ok() {
-                return Ok(Query::Login);
-            }
-
-            require_params(&sections, ["login", "username", "_", "password", "_"])?;
-            Ok(Query::LoginAttempt { username: sections[2], password: sections[4] })
-        }
-        "logout" => {
-            require_params(&sections, ["logout", "username", "_", "password", "_"])?;
-            Ok(Query::Logout { username: sections[2], password: sections[4] })
-        }
-        "register" => {
-            if require_params(&sections, ["register"]).is_ok() {
-                return Ok(Query::Register);
-            }
-
-            require_params(&sections, ["register", "username", "_", "password", "_"])?;
-            Ok(Query::RegisterAttempt { username: sections[2], password: sections[4] })
-        }
-        "get" => {
-            require_params(&sections, ["get", "username", "_"])?;
-            Ok(Query::Get { username: sections[2] })
-        }
-        "check" | "uncheck" => {
-            require_params(&sections, ["_", "_", "_", "username", "_", "password", "_"])?;
-            
-            let x = require_parse(&sections, 1,
-                |x| x.parse::<u32>().ok().filter(|&x| x < WIDTH))?;
-            let y = require_parse(&sections, 2,
-                |y| y.parse::<u32>().ok().filter(|&y| y < HEIGHT))?;
-
-            let checked = require_parse(&sections, 0, |s| match s {
-                "check" => Some(true),
-                "uncheck" => Some(false),
-                _ => None
-            })?;
-
-            Ok(Query::Set { x, y, checked, username: sections[4], password: sections[6] })
-        }
-        _ => Err(CatastrophicFailure::UnknownSubdomainQuery(first.to_string()))
+                Ok(Query::Set { x, y, checked, username: s[4], password: s[6] })
+            },
+            _ => Err(CatastrophicFailure::UnknownSubdomainQuery)
     }
+
 }
 
-fn require_parse<T, F: Fn(&str) -> Option<T>>(query: &Vec<&str>, segment: usize, parser: F) -> Result<T, CatastrophicFailure>{
-    let string = query.get(segment).unwrap(); // we've already passed it through require_params.
+fn require_parse<T, F: Fn(&str) -> Option<T>>(query: &Vec<&str>, segment: usize, parser: F) -> Result<T, CatastrophicFailure> {
+    let string = query.get(segment).unwrap(); // we've already passed it through check.
 
     parser(string).ok_or_else(|| {
         CatastrophicFailure::Unparseable {
@@ -148,28 +107,9 @@ fn require_parse<T, F: Fn(&str) -> Option<T>>(query: &Vec<&str>, segment: usize,
     })
 }
 
-fn require_params<const N: usize>(query: &Vec<&str>, params: [&str; N]) -> Result<(), CatastrophicFailure> {
-    
-    let Some(&first) = query.first() else {
-        return Err(CatastrophicFailure::NoSubdomain);
-    };
-
-    if query.len() != params.len() {
-        return Err(CatastrophicFailure::InvalidQueryLength {
-            count: params.len(),
-            query: first.into()
-        });
-    }
-
-    for (segment, &str) in params.iter().enumerate().filter(|(_, &s)| s != "_") {
-        if query[segment] != str {
-            return Err(CatastrophicFailure::ExpectedQueryText {
-                text: str.into(),
-                segment,
-                query: first.into(),
-            })
-        }
-    }
-
-    Ok(())
+fn check<const N: usize>(query: &Vec<&str>, params: [&str; N]) -> bool {
+    params.iter()
+        .enumerate()
+        .filter(|(_, &s)| s != "_")
+        .all(|(segment, &str)| query[segment] == str)
 }

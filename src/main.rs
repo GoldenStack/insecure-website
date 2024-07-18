@@ -4,9 +4,9 @@ pub mod response;
 
 use std::sync::Arc;
 
-use askama::Template;
+use askama_axum::Response;
 use axum::{
-    body::Body, extract::Host, http::{header::CONTENT_TYPE, Request}, routing::get, Router
+    body::Body, extract::Host, http::{header::CONTENT_TYPE, Request}, response::IntoResponse, routing::get, Router
 };
 use anyhow::Result;
 use database::db_initialize;
@@ -14,8 +14,7 @@ use dotenv_codegen::dotenv;
 use parse::{parse_host, parse_query};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use response::respond;
-use crate::response::Error;
+use response::{error, respond};
 
 // request types:
 
@@ -58,21 +57,34 @@ async fn main() -> Result<()> {
 
     db_initialize(db)?;
 
+    fn html<F: IntoResponse>(f: F) -> Response {
+        ([(CONTENT_TYPE, "text/html; charset=utf-8")], f).into_response()
+    }
+
     let r = arc.clone();
     let handler = |Host(mut hostname): Host, request: Request<Body>| async move {
         println!("giga nerd request @ {}", hostname);
 
         // fix any sillies sent over our computing networks :)
         hostname.make_ascii_lowercase();
-    
-        let query = match parse_host(&hostname).and_then(parse_query) {
-            Ok(q) => q,
-            Err(e) => return ([(CONTENT_TYPE, "text/html; charset=utf-8")], format!("{:?}", e))
+
+        let host = match parse_host(&hostname) {
+            Ok(host) => host,
+            Err(e) => return html(error("bad hostname", &e.to_string())),
+        };
+
+        let query = match host {
+            "assets-css" => return ([(CONTENT_TYPE, "text/css; charset=utf-8")], include_bytes!("../public/assets/style.css")).into_response(),
+            "assets-font" => return ([(CONTENT_TYPE, "font/woff2")], include_bytes!("../public/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2")).into_response(),
+            _ => match parse_query(host) {
+                Ok(q) => q,
+                Err(e) => return html(error("bad query", &e.to_string())),
+            }
         };
 
         match r.get() {
-            Ok(db) => ([(CONTENT_TYPE, "text/html; charset=utf-8")], respond(&query, &db)),
-            Err(e) => ([(CONTENT_TYPE, "text/html; charset=utf-8")], Error { header: "An error occurred while retrieving the database:", description: &e.to_string()}.render().unwrap())
+            Ok(db) => html(respond(&query, &db)),
+            Err(e) => html(error("an error occurred while retrieving the database:", &e.to_string()))
         }
     };
 
