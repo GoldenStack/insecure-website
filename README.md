@@ -28,7 +28,7 @@ please contact me if you would like to invest in my application
 
 ### \#\#\# fun facts
 
-\>  ip grabber resistant!
+>  ip grabber resistant!
 
 think this is an IP grabber? you can use this website entirely from common chat apps like Discord.
 
@@ -36,7 +36,7 @@ sending the URL in chat constitutes a valid request, and can be used to interact
 
 relevant data will be returned and embedded in the message. 
 
-\> isn't this encrypted either way?
+> isn't this encrypted either way?
 
 i lied. i actually do know what server name indication is. i just thought it would be funny to say i don't.
 
@@ -46,7 +46,7 @@ this means this website is still gloriously insecure.
 
 unfortunately, [Encrypted Client Hello](https://support.mozilla.org/en-US/kb/understand-encrypted-client-hello) does actually encrypt this field. so please disable it in order to be able to fully experience this web site! 
 
-\> CORS-free!
+> CORS-free!
 
 ok, i lied again. there actually is CORS for the stylesheet and font:
 
