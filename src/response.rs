@@ -42,7 +42,7 @@ pub fn respond(query: &Query, db: &DB) -> String {
             match db_retrieve(db, username) {
                 Err(e) => error(&format!("an error occurred while retrieving the data for user {}:", username), e),
                 Ok(None) => error_str("invalid username", &format!("could not find a user with the name {}!", username)),
-                Ok(Some(user)) => format!("Data for username {}:\n{:025b}", username, user.boxes()),
+                Ok(Some(user)) => get(username, user.boxes()),
             }
         },
         Query::Set { x, y, checked, username, password } => {
@@ -70,6 +70,19 @@ pub struct Login;
 #[derive(Template)]
 #[template(path = "register.html")]
 pub struct Register;
+
+#[derive(Template)]
+#[template(path = "get.html")]
+pub struct Get<'a> {
+    pub username: &'a str,
+    pub boxes: u64,
+}
+
+impl<'a> Get<'a> {
+    pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
+        if (self.boxes >> (y * 5 + x)) & 1 == 1 { " checked" } else { "" }
+    }
+}
 
 #[derive(Template)]
 #[template(path = "error.html")]
@@ -115,4 +128,10 @@ pub fn invalid_credentials() -> &'static str {
             description: "unfortunately, either your username or password was incorrect.",
         }.render().unwrap()
     })
+}
+
+pub fn get<'a>(username: &'a str, boxes: u64) -> String {
+    Get {
+        username, boxes
+    }.render().unwrap()
 }

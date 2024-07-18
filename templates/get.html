@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <meta charset="UTF-8">
+        <title>insecure website</title>
+        <meta name="author" content="GoldenStack">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" href="/assets/golden.png">
+
+        <link rel="preload" href="/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="/assets/style.css">
+
+    </head>
+
+    <body>
+        <div class="header">
+            <div class="title">
+                <h1><s>In</s>secure Website</h1>
+            </div>
+            <div class="navbar">
+                <h3><a href="{{ crate::PREFIX }}index{{ crate::HOSTNAME }}">home</a></h3>
+                <h3><a href="{{ crate::PREFIX }}login{{ crate::HOSTNAME }}">login</a></h3>
+                <h3><a href="https://github.com/GoldenStack/insecure-website">source</a></h3>
+            </div>
+        </div>
+
+        <br>
+
+        <div style="text-align: center;">
+            <p>{{ username }}'s profile</p>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+            <div>
+                {% for y in 0..5 %}
+                    {% for x in 0..5 %}<input type="checkbox" autocomplete="off"{{ Self::checked(self, x, y) }}>{% endfor %}
+                    <br>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <h style="font-size: 0.7rem;">witness their glorious checkboxes -</h>
+            <br>
+            <h style="font-size: 0.7rem;">but you may not check any for yourself.</h>
+        </div>
+    </body>
+
+    <style>
+        input[type="checkbox"] {
+            line-height: 0em;
+            pointer-events: none;
+
+            margin: 0.5rem 0.5rem;
+
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+    </style>
+
+    <script>
+
+        document.getElementById("register").onclick = e => {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+            window.location = `{{ crate::PREFIX }}register-username-${username}-password-${password}{{ crate::HOSTNAME }}`;
+        }
+    </script>
+
+</html>
