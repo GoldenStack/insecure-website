@@ -10,6 +10,7 @@ use axum::{
 };
 use anyhow::Result;
 use database::db_initialize;
+use dotenv_codegen::dotenv;
 use parse::{parse_host, parse_query};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -40,15 +41,16 @@ use crate::response::Error;
 // for some reason web frameworks support placeholders in example.com/PLACEHOLDER
 // but not PLACEHOLDER.example.com. i wonder why.
 
-pub const PREFIX: &str = "http://";
-pub const HOSTNAME: &str = "-insecure.localhost:1472";
+pub const PREFIX: &str = dotenv!("prefix");
+pub const HOSTNAME: &str = dotenv!("hostname");
+pub const DATABASE: &str = dotenv!("database");
 
 pub const WIDTH: u32 = 5;
 pub const HEIGHT: u32 = 5;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let manager = SqliteConnectionManager::file("./database.db3");
+    let manager = SqliteConnectionManager::file(DATABASE);
     let pool = Pool::new(manager)?;
     let arc = Arc::new(pool);
 
@@ -74,8 +76,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    // no need for multiple handlers with actual behaviour because of the incredible good design of our app
-    // we do need to serve css though
+    // no need for multiple handlers because of the incredible good design of our app
     let app = Router::new().route("/", get(handler))
         .route("/assets/style.css", get(|| async move {
             ([(CONTENT_TYPE, "text/css; charset=utf-8")], include_bytes!("../public/assets/style.css"))
