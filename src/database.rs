@@ -3,6 +3,7 @@ use argon2::Argon2;
 use r2d2::PooledConnection;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ErrorCode;
+use sha2::{Sha256, Digest};
 
 pub type DB = PooledConnection<SqliteConnectionManager>;
 
@@ -116,9 +117,18 @@ fn hash(password: &str) -> Result<([u8; 32], [u8; 8])> {
 }
 
 fn hash_with_salt(password: &str, salt: [u8; 8]) -> Result<[u8; 32]> {
-    let mut output = [0u8; 32];
-    Argon2::default().hash_password_into(password.as_bytes(), &salt, &mut output)
-        .map_err(|e| anyhow!("Could not hash password: {}", e))?;
+    if crate::SECURE_HASHING == "true" { // could be faster but hashing is slow either way, so it should be fine
+        let mut output = [0u8; 32];
+        Argon2::default().hash_password_into(password.as_bytes(), &salt, &mut output)
+            .map_err(|e| anyhow!("Could not hash password: {}", e))?;
+    
+        Ok(output)
+    } else {
+        let mut hasher = Sha256::new();
+        hasher.update(password);
+        hasher.update(salt);
+        let hash256: [u8; 32] = hasher.finalize().into();
+        Ok(hash256)
+    }
 
-    Ok(output)
 }

@@ -41,6 +41,7 @@ use response::{error, handle_query, parse_host};
 pub const PREFIX: &str = dotenv!("prefix");
 pub const HOSTNAME: &str = dotenv!("hostname");
 pub const DATABASE: &str = dotenv!("database");
+pub const SECURE_HASHING: &str = dotenv!("secure_hashing");
 
 pub const WIDTH: u32 = 5;
 pub const HEIGHT: u32 = 5;
