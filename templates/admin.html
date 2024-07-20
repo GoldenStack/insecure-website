@@ -91,7 +91,7 @@
         }
 
         document.getElementById("username_dump").onclick = e => {
-            window.location = "{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-username-dump{{ crate::HOSTNAME }}"
+            window.open("{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-username-dump{{ crate::HOSTNAME }}");
         }
     </script>
 
