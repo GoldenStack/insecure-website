@@ -64,8 +64,6 @@ async fn main() -> Result<()> {
 
     let r = arc.clone();
     let handler = |Host(mut hostname): Host, request: Request<Body>| async move {
-        println!("giga nerd request @ {}", hostname);
-
         // fix any sillies sent over our computing networks :)
         hostname.make_ascii_lowercase();
 
@@ -79,6 +77,8 @@ async fn main() -> Result<()> {
             "assets-font" => return ([(CONTENT_TYPE, "font/woff2"), (ACCESS_CONTROL_ALLOW_ORIGIN, "*")], include_bytes!("../public/assets/Atkinson-Hyperlegible-Regular-102a.woff2")).into_response(),
             _ => {}
         };
+
+        println!("giga nerd request @ {}", hostname);
 
         match r.get() {
             Ok(db) => handle_query(&db, host),
