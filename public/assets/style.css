@@ -153,6 +153,10 @@ h1 {
     margin-right: 0.5rem;
 }
 
+.navbar h3 {
+    font-size: 1.0rem;
+}
+
 .header .navbar h3:last-child::after {
     content: "";
 }

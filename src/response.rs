@@ -1,5 +1,5 @@
 use askama_axum::{IntoResponse, Response, Template};
-use crate::{database::{db_authenticate, db_insert, db_retrieve, db_update, User, DB}, HEIGHT, HOSTNAME, WIDTH};
+use crate::{database::{db_authenticate, db_get_verified, db_insert, db_retrieve, db_update, User, DB}, HEIGHT, HOSTNAME, WIDTH};
 
 /// Parses the subdomain (all of our data) out of a hostname.
 /// This uses the [HOSTNAME] constant, so make sure to update that when
@@ -34,11 +34,19 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
         s if check(s, ["index"]) => Index.into_response(),
         s if check(s, ["login"]) => Login.into_response(),
         s if check(s, ["register"]) => Register.into_response(),
+        s if check(s, ["browse"]) => {
+            let users = match db_get_verified(db) {
+                Ok(users) => users,
+                Err(e) => return error("could not get users", &e.to_string()).into_response(),
+            };
+
+            Browse { users }.into_response()
+        },
         s if check(s, ["login", "username", "_", "password", "_"]) => {
             let (username, password) = (s[2], s[4]);
 
             wrapped_db_auth(db, username, password,
-                || wrapped_db_retrieve(db, username, |user| Set { username, password, boxes: user.boxes() }))
+                || wrapped_db_retrieve(db, username, |user| Set { user, password }))
         }
         s if check(s, ["logout", "username", "_", "password", "_"]) => {
             let (username, password) = (s[2], s[4]);
@@ -53,7 +61,7 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
                 1..=2 => error("invalid username", "sorry, your username is too short. three characters at minimum, please").into_response(),
                 3..=16 => match db_insert(db, username, password) {
                     Err(e) => credentials_error(&e.to_string()).into_response(),
-                    Ok(true) => wrapped_db_retrieve(db, username, |user| Set { username, password, boxes: user.boxes() }),
+                    Ok(true) => wrapped_db_retrieve(db, username, |user| Set { user, password }),
                     Ok(false) => error("invalid username", "sorry, but an account with that username already exists.").into_response(),
                 },
                 17.. => error("invalid username", "sorry, your username is too long. sixteen characters at maximum, please").into_response(),
@@ -62,7 +70,7 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
         s if check(s, ["get", "username", "_"]) => {
             let username = s[2];
 
-            wrapped_db_retrieve(db, username, |user| Get { username, boxes: user.boxes() })
+            wrapped_db_retrieve(db, username, |user| Get { user })
         }
         s if check(s, ["check", "_", "_", "username", "_", "password", "_"])
             || check(s, ["uncheck", "_", "_", "username", "_", "password", "_"]) => {
@@ -88,7 +96,7 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
                 wrapped_db_auth(db, username, password,
                         || match db_update(db, username, |data| set_box(data, x, y, checked)) {
                     Err(e) => credentials_error(&e.to_string()).into_response(),
-                    Ok(_) => wrapped_db_retrieve(db, username, |user| Set { username, password, boxes: user.boxes() }),
+                    Ok(_) => wrapped_db_retrieve(db, username, |user| Set { user, password }),
                 })
             },
             _ => error("unknown subdomain query", "unfortunately your subdomain query isn't recognized, so i have no idea what you're trying to do.").into_response()
@@ -124,6 +132,12 @@ pub fn wrapped_db_retrieve<F: Fn(User) -> T, T: IntoResponse>(db: &DB, username:
 pub struct Index;
 
 #[derive(Template)]
+#[template(path = "browse.html")]
+pub struct Browse {
+    pub users: Vec<String>
+}
+
+#[derive(Template)]
 #[template(path = "login.html")]
 pub struct Login;
 
@@ -133,32 +147,50 @@ pub struct Register;
 
 #[derive(Template)]
 #[template(path = "get.html")]
-pub struct Get<'a> {
-    pub username: &'a str,
-    pub boxes: u64,
+pub struct Get {
+    pub user: User,
 }
 
 #[derive(Template)]
 #[template(path = "set.html")]
 pub struct Set<'a> {
-    pub username: &'a str,
+    pub user: User,
     pub password: &'a str,
-    pub boxes: u64,
 }
 
-impl<'a> Get<'a> {
+impl Get {
+    pub fn username(&self) -> &str {
+        self.user.username()
+    }
+
+    pub fn verified(&self) -> bool {
+        self.user.verified()
+    }
+    
     pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
-        if get_box(self.boxes, *x, *y) { " checked" } else { "" }
+        if get_box(self.user.boxes(), *x, *y) { " checked" } else { "" }
     }
 }
 
 impl<'a> Set<'a> {
+    pub fn username(&self) -> &str {
+        self.user.username()
+    }
+
+    pub fn password(&self) -> &str {
+        &self.password
+    }
+
+    pub fn verified(&self) -> bool {
+        self.user.verified()
+    }
+
     pub fn checked(&self, x: &u32, y: &u32) -> &'static str {
-        if get_box(self.boxes, *x, *y) { " checked" } else { "" }
+        if get_box(self.user.boxes(), *x, *y) { " checked" } else { "" }
     }
 
     pub fn prefix(&self, x: &u32, y: &u32) -> &'static str {
-        if get_box(self.boxes, *x, *y) { "uncheck" } else { "check" }
+        if get_box(self.user.boxes(), *x, *y) { "uncheck" } else { "check" }
     }
 }
 

@@ -17,15 +17,19 @@
             </div>
             <div class="navbar">
                 <h3><a href="{{ crate::PREFIX }}index{{ crate::HOSTNAME }}">home</a></h3>
-                <h3><a href="{{ crate::PREFIX }}logout-username-{{ username}}-password-{{ password }}{{ crate::HOSTNAME }}">logout</a></h3>
+                <h3><a href="{{ crate::PREFIX }}browse{{ crate::HOSTNAME }}">browse</a></h3>
+                <h3><a href="{{ crate::PREFIX }}logout-username-{{ Self::username(self) }}-password-{{ Self::password(self) }}{{ crate::HOSTNAME }}">logout</a></h3>
                 <h3><a href="https://github.com/GoldenStack/insecure-website">source</a></h3>
             </div>
         </div>
 
         <br>
 
-        <div style="text-align: center;">
+        <div style="text-align: center; display: flex; justify-content: center;">
             <p>your profile</p>
+            {% if Self::verified(self) %}
+            &nbsp;<span title="verified"><p>⭐</p></span>
+            {% endif %}
         </div>
 
         <div style="display: flex; justify-content: center;">
@@ -34,7 +38,7 @@
                 <!-- look at this excess indentation! -->
                 {% for y in 0..crate::HEIGHT %}
                     {% for x in 0..crate::WIDTH -%}
-                        <input type="checkbox" autocomplete="off" onclick="window.location='{{ crate::PREFIX }}{{ Self::prefix(self, x, y) }}-{{ x }}-{{ y }}-username-{{ username}}-password-{{ password }}{{ crate::HOSTNAME }}'"{{ Self::checked(self, x, y) }}>
+                        <input type="checkbox" autocomplete="off" onclick="window.location='{{ crate::PREFIX }}{{ Self::prefix(self, x, y) }}-{{ x }}-{{ y }}-username-{{ Self::username(self) }}-password-{{ Self::password(self) }}{{ crate::HOSTNAME }}'"{{ Self::checked(self, x, y) }}>
                     {%- endfor %}
                     <br>
                 {% endfor %}
@@ -46,7 +50,9 @@
             <br>
             <h style="font-size: 0.7rem;">feel free to make any changes to your glorious domain.</h>
             <br>
-            <a onclick="window.navigator.clipboard.writeText('{{ crate::PREFIX }}get-username-{{ username}}{{ crate::HOSTNAME }}')"><h style="font-size: 0.7rem; line-height: 0.8rem;">click to copy your public share link !</h></a>
+            <a onclick="window.navigator.clipboard.writeText('{{ crate::PREFIX }}get-username-{{ Self::username(self) }}{{ crate::HOSTNAME }}')"><h style="font-size: 0.7rem; line-height: 0.8rem;">click to copy your public share link !</h></a>
+            <br>
+            <h style="font-size: 0.7rem;">want to get verified? message me on discord @GoldenStack</h>
         </div>
     </body>
 

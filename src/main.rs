@@ -8,7 +8,7 @@ use axum::{
     body::Body, extract::Host, http::{header::{ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE}, Request}, response::IntoResponse, routing::get, Router
 };
 use anyhow::Result;
-use database::db_initialize;
+use database::{db_initialize, db_verified};
 use dotenv_codegen::dotenv;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;

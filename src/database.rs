@@ -14,11 +14,20 @@ pub struct User {
     password: [u8; 32],
     salt: [u8; 8],
     boxes: u64,
+    verified: bool
 }
 
 impl User {
+    pub fn username(&self) -> &str {
+        &self.username
+    }
+
     pub fn boxes(&self) -> u64 {
         self.boxes
+    }
+
+    pub fn verified(&self) -> bool {
+        self.verified
     }
 }
 
@@ -30,6 +39,7 @@ pub fn db_initialize(db: &DB) -> Result<()> {
             password BLOB,
             salt     BLOB,
             boxes    BLOB,
+            verified BLOB,
 
             UNIQUE(username) ON CONFLICT IGNORE
         )", ())?;
@@ -40,7 +50,7 @@ pub fn db_initialize(db: &DB) -> Result<()> {
 }
 
 pub fn db_retrieve(db: &DB, username: &str) -> Result<Option<User>> {
-    let mut get = db.prepare("SELECT id, username, password, salt, boxes FROM users WHERE username = ?1")?;
+    let mut get = db.prepare("SELECT id, username, password, salt, boxes, verified FROM users WHERE username = ?1")?;
 
     let mut users = get.query_map([username], |row| {
         Ok(User {
@@ -48,7 +58,8 @@ pub fn db_retrieve(db: &DB, username: &str) -> Result<Option<User>> {
             username: row.get(1)?,
             password: row.get(2)?,
             salt: row.get(3)?,
-            boxes: row.get(4)?
+            boxes: row.get(4)?,
+            verified: row.get(5)?
         })
     })?;
 
@@ -68,8 +79,8 @@ pub fn db_insert(db: &DB, username: &str, password: &str) -> Result<bool> {
     let (password, salt) = hash(password)?;
 
     db.execute(
-        "INSERT INTO users (username, password, salt, boxes) VALUES (?1, ?2, ?3, ?4)",
-        (username, password, salt, 0),
+        "INSERT INTO users (username, password, salt, boxes, verified) VALUES (?1, ?2, ?3, ?4, ?5)",
+        (username, password, salt, 0, false),
     ).map(|_| true)
     .or_else(|e| {
         if let rusqlite::Error::SqliteFailure(error, _) = e {
@@ -83,7 +94,6 @@ pub fn db_insert(db: &DB, username: &str, password: &str) -> Result<bool> {
 }
 
 pub fn db_update<F: Fn(u64) -> u64>(db: &DB, username: &str, f: F) -> Result<bool> {
-
     let Some(user) = db_retrieve(db, username)? else {
         return Ok(false);
     };
@@ -93,6 +103,29 @@ pub fn db_update<F: Fn(u64) -> u64>(db: &DB, username: &str, f: F) -> Result<boo
     )?;
 
     Ok(true)
+}
+
+pub fn db_verified(db: &DB, username: &str, verified: bool) -> Result<bool> {
+    let Some(user) = db_retrieve(db, username)? else {
+        return Ok(false);
+    };
+
+    db.execute(
+        "UPDATE users SET verified = ?1 WHERE id = ?2", (verified, user.id)
+    )?;
+
+    Ok(true)
+}
+
+pub fn db_get_verified(db: &DB) -> Result<Vec<String>> {
+    let mut get = db.prepare("SELECT username FROM users WHERE verified = ?1")?;
+
+    let users = get.query_map([true], |row| {
+        let username: String = row.get(0)?;
+        Ok(username)
+    })?;
+
+    Ok(users.filter(Result::is_ok).map(Result::unwrap).collect())
 }
 
 pub fn db_authenticate(db: &DB, username: &str, password: &str) -> Result<bool> {

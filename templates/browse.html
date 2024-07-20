@@ -26,30 +26,24 @@
 
         <br>
 
-        <div style="text-align: center; display: flex; justify-content: center;">
-            <p>{{ Self::username(self) }}'s profile</p>
-            {% if Self::verified(self) %}
-            &nbsp;<span title="verified"><p>⭐</p></span>
-            {% endif %}
-        </div>
-
-        <div style="display: flex; justify-content: center;">
-            <div>
-                <!-- the templating library i'm using really shows, doesn't it -->
-                <!-- look at this excess indentation! -->
-                {% for y in 0..crate::HEIGHT %}
-                    {% for x in 0..crate::WIDTH -%}
-                        <input type="checkbox" autocomplete="off"{{ Self::checked(self, x, y) }}>
-                    {%- endfor %}
-                    <br>
-                {% endfor %}
-            </div>
-        </div>
-
         <div style="text-align: center;">
-            <h style="font-size: 0.7rem;">witness their glorious checkboxes -</h>
+            <h3>verified users</h3>
+
             <br>
-            <h style="font-size: 0.7rem;">but you may not check any for yourself.</h>
+            {% for user in users %}
+                <a href="{{ crate::PREFIX}}get-username-{{ user }}{{ crate::HOSTNAME}}"><h4 style="margin-top: 1.0rem;">{{ user }}&nbsp;<span title="verified">⭐</span></h4></a>
+                <br>
+            {% endfor %}
+
+            <br>
+            
+            <h style="font-size: 0.7rem;">these are the users deemed to be the coolest.</h>
+            <br>
+            <h style="font-size: 0.7rem;">and by that, i mean i know they are not bots.</h>
+            <br>
+            <h style="font-size: 0.7rem;">want to get verified? message me on discord @GoldenStack</h>
+
+            <br>
         </div>
     </body>
 
