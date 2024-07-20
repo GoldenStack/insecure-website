@@ -43,7 +43,7 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
         s if check(s, ["logout", "username", "_", "password", "_"]) => {
             let (username, password) = (s[2], s[4]);
 
-            wrapped_db_auth(db, username, password, || "Logout success!")
+            wrapped_db_auth(db, username, password, || Index)
         }
         s if check(s, ["register", "username", "_", "password", "_"]) => {
             let (username, password) = (s[2], s[4]);
