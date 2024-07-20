@@ -62,10 +62,6 @@ async fn main() -> Result<()> {
 
     db_initialize(db)?;
 
-    fn html<F: IntoResponse>(f: F) -> Response {
-        ([(CONTENT_TYPE, "text/html; charset=utf-8")], f).into_response()
-    }
-
     let r = arc.clone();
     let handler = |Host(mut hostname): Host, request: Request<Body>| async move {
         println!("giga nerd request @ {}", hostname);
@@ -86,7 +82,7 @@ async fn main() -> Result<()> {
 
         match r.get() {
             Ok(db) => handle_query(&db, host),
-            Err(e) => html(error("an error occurred while retrieving the database:", &e.to_string()))
+            Err(e) => error("an error occurred while retrieving the database:", &e.to_string()).into_response()
         }
     };
 
