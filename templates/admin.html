@@ -1,0 +1,77 @@
+<!-- pretty funny that you're looking through this site's source code to see the admin panel -->
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>insecure website</title>
+        <meta name="author" content="GoldenStack">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="preload" href="{{ crate::PREFIX }}assets-font{{ crate::HOSTNAME }}" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="{{ crate::PREFIX }}assets-css{{ crate::HOSTNAME }}">
+
+    </head>
+
+    <body>
+        <div class="header">
+            <div class="title">
+                <h1><s>In</s>secure Website</h1>
+            </div>
+            <div class="navbar">
+                <h3><a href="{{ crate::PREFIX }}index{{ crate::HOSTNAME }}">home</a></h3>
+                <h3><a href="{{ crate::PREFIX }}browse{{ crate::HOSTNAME }}">browse</a></h3>
+                <h3><a href="{{ crate::PREFIX }}login{{ crate::HOSTNAME }}">login</a></h3>
+                <h3><a href="https://github.com/GoldenStack/insecure-website">source</a></h3>
+            </div>
+        </div>
+
+        <br>
+
+        <div style="text-align: center;">
+            <h3>the admin panel</h3>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+            <div>
+                <br>
+                <label for="verify_username">verify/unverify user</label><br>
+                <input type="text" id="verify_username" placeholder="goldenstack">
+                <br>
+                <div style="text-align: center;">
+                    <button type="button" id="verify_button">verify</button>
+                    <button type="button" id="unverify_button">unverify</button>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <style>
+        button {
+            margin: 0.5rem 0.25rem;
+        }
+
+        input[type="checkbox"] {
+            line-height: 0em;
+
+            margin: 0.5rem 0.5rem;
+            
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+    </style>
+
+    <script>
+        document.getElementById("verify_button").onclick = e => {
+            let username = document.getElementById("verify_username").value;
+            fetch(`{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-verify-${username}{{ crate::HOSTNAME }}`);
+        }
+
+        document.getElementById("unverify_button").onclick = e => {
+            let username = document.getElementById("verify_username").value;
+            fetch(`{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-unverify-${username}{{ crate::HOSTNAME }}`);
+        }
+    </script>
+
+</html>
+

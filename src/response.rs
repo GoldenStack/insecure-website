@@ -1,5 +1,5 @@
 use askama_axum::{IntoResponse, Response, Template};
-use crate::{database::{db_authenticate, db_get_verified, db_insert, db_retrieve, db_update, User, DB}, HEIGHT, HOSTNAME, WIDTH};
+use crate::{database::{db_authenticate, db_get_verified, db_insert, db_retrieve, db_update, db_verified, User, DB}, HEIGHT, HOSTNAME, WIDTH};
 
 /// Parses the subdomain (all of our data) out of a hostname.
 /// This uses the [HOSTNAME] constant, so make sure to update that when
@@ -99,6 +99,19 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
                     Ok(_) => wrapped_db_retrieve(db, username, |user| Set { user, password }),
                 })
             },
+            s if check(s, ["admin", crate::ADMIN_PASSWORD]) => Admin.into_response(),
+            s if check(s, ["admin", crate::ADMIN_PASSWORD, "verify", "_"]) => {
+                match db_verified(db, s[3], true) {
+                    Ok(_) => Admin.into_response(),
+                    Err(e) => error("sql error", &e.to_string()).into_response()
+                }
+            },
+            s if check(s, ["admin", crate::ADMIN_PASSWORD, "unverify", "_"]) => {
+                match db_verified(db, s[3], false) {
+                    Ok(_) => Admin.into_response(),
+                    Err(e) => error("sql error", &e.to_string()).into_response()
+                }
+            },
             _ => error("unknown subdomain query", "unfortunately your subdomain query isn't recognized, so i have no idea what you're trying to do.").into_response()
     }
 
@@ -157,6 +170,10 @@ pub struct Set<'a> {
     pub user: User,
     pub password: &'a str,
 }
+
+#[derive(Template)]
+#[template(path = "admin.html")]
+pub struct Admin;
 
 impl Get {
     pub fn username(&self) -> &str {

@@ -42,12 +42,18 @@ pub const PREFIX: &str = dotenv!("prefix");
 pub const HOSTNAME: &str = dotenv!("hostname");
 pub const DATABASE: &str = dotenv!("database");
 pub const SECURE_HASHING: &str = dotenv!("secure_hashing");
+pub const ADMIN_PASSWORD: &str = dotenv!("admin_password");
 
 pub const WIDTH: u32 = 5;
 pub const HEIGHT: u32 = 5;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // i bet that, despite this warning, people will still try these
+    if ["dosbox074", "admin", "password", ""].contains(&ADMIN_PASSWORD) {
+        panic!("change the goddamned admin password to something mildly secure PLEASE");
+    }
+
     let manager = SqliteConnectionManager::file(DATABASE);
     let pool = Pool::new(manager)?;
     let arc = Arc::new(pool);
