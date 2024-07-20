@@ -39,8 +39,21 @@
                 <input type="text" id="verify_username" placeholder="goldenstack">
                 <br>
                 <div style="text-align: center;">
-                    <button type="button" id="verify_button">verify</button>
-                    <button type="button" id="unverify_button">unverify</button>
+                    <button type="button" id="verify">verify</button>
+                    <button type="button" id="unverify">unverify</button>
+                </div>
+
+                <br>
+                <label for="verify_username">delete user</label><br>
+                <input type="text" id="delete_username" placeholder="goldenstack">
+                <br>
+                <div style="text-align: center;">
+                    <button type="button" id="delete">delete</button>
+                </div>
+
+                <br>
+                <div style="text-align: center">
+                    <button type="button" id="username_dump">dump usernames</button>
                 </div>
             </div>
         </div>
@@ -62,14 +75,23 @@
     </style>
 
     <script>
-        document.getElementById("verify_button").onclick = e => {
+        document.getElementById("verify").onclick = e => {
             let username = document.getElementById("verify_username").value;
             fetch(`{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-verify-${username}{{ crate::HOSTNAME }}`);
         }
 
-        document.getElementById("unverify_button").onclick = e => {
+        document.getElementById("unverify").onclick = e => {
             let username = document.getElementById("verify_username").value;
             fetch(`{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-unverify-${username}{{ crate::HOSTNAME }}`);
+        }
+
+        document.getElementById("delete").onclick = e => {
+            let username = document.getElementById("delete_username").value;
+            fetch(`{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-delete-${username}{{ crate::HOSTNAME }}`);
+        }
+
+        document.getElementById("username_dump").onclick = e => {
+            window.location = "{{ crate::PREFIX }}admin-{{ crate::ADMIN_PASSWORD }}-username-dump{{ crate::HOSTNAME }}"
         }
     </script>
 

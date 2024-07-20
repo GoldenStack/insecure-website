@@ -1,5 +1,6 @@
 use askama_axum::{IntoResponse, Response, Template};
-use crate::{database::{db_authenticate, db_get_verified, db_insert, db_retrieve, db_update, db_verified, User, DB}, HEIGHT, HOSTNAME, WIDTH};
+use axum::{body::Body, http::header::CONTENT_TYPE};
+use crate::{database::{db_authenticate, db_delete, db_get_verified, db_insert, db_retrieve, db_update, db_username_dump, db_verified, User, DB}, HEIGHT, HOSTNAME, WIDTH};
 
 /// Parses the subdomain (all of our data) out of a hostname.
 /// This uses the [HOSTNAME] constant, so make sure to update that when
@@ -112,6 +113,21 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
                     Err(e) => error("sql error", &e.to_string()).into_response()
                 }
             },
+            s if check(s, ["admin", crate::ADMIN_PASSWORD, "username", "dump"]) => {
+                match db_username_dump(db) {
+                    Ok(users) => Response::builder()
+                        .header(CONTENT_TYPE, "text/plain; charset=utf-8;")
+                        .body(Body::from(users.join("\n")))
+                        .unwrap(),
+                    Err(e) => error("sql error", &e.to_string()).into_response()
+                }
+            },
+            s if check(s, ["admin", crate::ADMIN_PASSWORD, "delete", "_"]) => {
+                match db_delete(db, s[3]) {
+                    Ok(_) => Admin.into_response(),
+                    Err(e) => error("sql error", &e.to_string()).into_response()
+                }
+            }
             _ => error("unknown subdomain query", "unfortunately your subdomain query isn't recognized, so i have no idea what you're trying to do.").into_response()
     }
 

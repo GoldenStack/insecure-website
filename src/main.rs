@@ -85,7 +85,7 @@ async fn main() -> Result<()> {
         };
 
         match r.get() {
-            Ok(db) => html(handle_query(&db, host)),
+            Ok(db) => handle_query(&db, host),
             Err(e) => html(error("an error occurred while retrieving the database:", &e.to_string()))
         }
     };

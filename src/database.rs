@@ -105,6 +105,18 @@ pub fn db_update<F: Fn(u64) -> u64>(db: &DB, username: &str, f: F) -> Result<boo
     Ok(true)
 }
 
+pub fn db_delete(db: &DB, username: &str) -> Result<bool> {
+    let Some(user) = db_retrieve(db, username)? else {
+        return Ok(false);
+    };
+
+    db.execute(
+        "DELETE FROM users WHERE id = ?1", [user.id]
+    )?;
+
+    Ok(true)
+}
+
 pub fn db_verified(db: &DB, username: &str, verified: bool) -> Result<bool> {
     let Some(user) = db_retrieve(db, username)? else {
         return Ok(false);
@@ -121,6 +133,17 @@ pub fn db_get_verified(db: &DB) -> Result<Vec<String>> {
     let mut get = db.prepare("SELECT username FROM users WHERE verified = ?1")?;
 
     let users = get.query_map([true], |row| {
+        let username: String = row.get(0)?;
+        Ok(username)
+    })?;
+
+    Ok(users.filter(Result::is_ok).map(Result::unwrap).collect())
+}
+
+pub fn db_username_dump(db: &DB) -> Result<Vec<String>> {
+    let mut get = db.prepare("SELECT username FROM users")?;
+
+    let users = get.query_map([], |row| {
         let username: String = row.get(0)?;
         Ok(username)
     })?;
