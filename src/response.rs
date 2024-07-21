@@ -57,6 +57,11 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
         s if check(s, ["register", "username", "_", "password", "_"]) => {
             let (username, password) = (s[2], s[4]);
 
+            if username.len() + password.len() > 23 {
+                let response = "read the big red message !!";
+                return Register { username_err: response, password_err: response }.into_response()
+            }
+
             if password.is_empty() {
                 return Register { username_err: "", password_err: "okay, not that insecure." }.into_response()
             }
