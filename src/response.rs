@@ -34,7 +34,7 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
     match &string.split("-").collect::<Vec<_>>() {
         s if check(s, ["index"]) => Index.into_response(),
         s if check(s, ["login"]) => Login.into_response(),
-        s if check(s, ["register"]) => Register.into_response(),
+        s if check(s, ["register"]) => Register { username_err: "", password_err: "" }.into_response(),
         s if check(s, ["browse"]) => {
             let users = match db_get_verified(db) {
                 Ok(users) => users,
@@ -57,15 +57,19 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
         s if check(s, ["register", "username", "_", "password", "_"]) => {
             let (username, password) = (s[2], s[4]);
 
+            if password.is_empty() {
+                return Register { username_err: "", password_err: "okay, not that insecure." }.into_response()
+            }
+
             match username.len() {
-                0 => error("invalid username", "trying to register a zero-length username! how special.").into_response(),
-                1..=2 => error("invalid username", "sorry, your username is too short. three characters at minimum, please").into_response(),
+                0 => Register { username_err: "trying to register an empty username! how special.", password_err: "" }.into_response(),
+                1..=2 => Register { username_err: "too short. at least 3 characters please", password_err: "" }.into_response(),
                 3..=16 => match db_insert(db, username, password) {
                     Err(e) => credentials_error(&e.to_string()).into_response(),
                     Ok(true) => wrapped_db_retrieve(db, username, |user| Set { user, password }),
-                    Ok(false) => error("invalid username", "sorry, but an account with that username already exists.").into_response(),
+                    Ok(false) => Register { username_err: "that username is taken !", password_err: "" }.into_response(),
                 },
-                17.. => error("invalid username", "sorry, your username is too long. sixteen characters at maximum, please").into_response(),
+                17.. => Register { username_err: "too long. at most 16 characters please", password_err: "" }.into_response(),
             }
         }
         s if check(s, ["get", "username", "_"]) => {
@@ -96,7 +100,7 @@ pub fn handle_query<'a>(db: &DB, string: &'a str) -> Response {
 
                 wrapped_db_auth(db, username, password,
                         || match db_update(db, username, |data| set_box(data, x, y, checked)) {
-                    Err(e) => credentials_error(&e.to_string()).into_response(),
+                    Err(e) => error("sql error while updating db", &e.to_string()).into_response(),
                     Ok(_) => wrapped_db_retrieve(db, username, |user| Set { user, password }),
                 })
             },
@@ -172,7 +176,10 @@ pub struct Login;
 
 #[derive(Template)]
 #[template(path = "register.html")]
-pub struct Register;
+pub struct Register<'a> {
+    username_err: &'a str,
+    password_err: &'a str,
+}
 
 #[derive(Template)]
 #[template(path = "get.html")]

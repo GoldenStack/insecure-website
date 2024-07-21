@@ -42,14 +42,22 @@
                 <label for="username">username</label><br>
                 <input type="text" id="username" placeholder="goldenstack" required>
                 <br>
+                {% if username_err.is_empty() %}
                 <h style="font-size: 0.7rem;">3-16 characters (yes this is verified server-side)</h>
+                {% else %}
+                <b><h style="font-size: 0.7rem; color: red;">* {{ username_err }}</h></b>
+                {% endif %}
     
                 <br><br>
         
                 <label for="password">password</label><br>
                 <input type="password" id="password" placeholder="•••••••••" required>
                 <br>
+                {% if password_err.is_empty() %}
                 <h style="font-size: 0.7rem;">feel free to make this as insecure as you want :)</h>
+                {% else %}
+                <b><h style="font-size: 0.7rem; color: red;">* {{ password_err }}</h></b>
+                {% endif %}
 
                 <br><br>
                 
